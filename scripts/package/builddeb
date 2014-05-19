@@ -43,7 +43,7 @@ create_package() {
 	mips*)
 		debarch=mips$(grep -q CPU_LITTLE_ENDIAN=y .config && echo el) ;;
 	arm*)
-		               if grep -q CONFIG_AEABI=y $KCONFIG_CONFIG; then
+				               if grep -q CONFIG_AEABI=y $KCONFIG_CONFIG; then
                    if grep -q CONFIG_VFP=y $KCONFIG_CONFIG; then
                        debarch=armhf
                    else
@@ -71,7 +71,7 @@ create_package() {
 	fi
 
 	# Create the package
-	dpkg-gencontrol -isp $forcearch -Vkernel:debarch="${debarch:-$(dpkg --print-architecture)}" -p$pname -P"$pdir"
+	dpkg-gencontrol -isp $forcearch -p$pname -P"$pdir"
 	dpkg --build "$pdir" ..
 }
 
@@ -174,18 +174,18 @@ if [ -f /etc/armStrap.conf ]; then
   . /etc/armStrap.conf
 fi
 
-if [ -f /boot/uEnv.cb2 ]; then
-touch /boot/uEnv.cb2
+if [ -f /boot/uEnv.ct ]; then
+touch /boot/uEnv.ct
 rm -f /boot/uEnv.bak
-cp /boot/uEnv.cb2 /boot/uEnv.bak
-awk '/^kernel=/ { skip = 1; } /^dtb=/ { skip = 1; } /.*/ { if (skip) skip = 0; else print \$0; }' /boot/uEnv.cb2 > \${tmp_uenv}
+cp /boot/uEnv.ct /boot/uEnv.bak
+awk '/^kernel=/ { skip = 1; } /^dtb=/ { skip = 1; } /.*/ { if (skip) skip = 0; else print \$0; }' /boot/uEnv.ct > \${tmp_uenv}
 echo "kernel=/boot/uImage-\${1}" >> \${tmp_uenv}
 
 if [ -f /boot/\${uboot_kernel_dtb} ]; then
   echo "dtb=\${uboot_kernel_dtb}" >> \${tmp_uenv}
 fi
-rm -f /boot/uEnv.cb2
-mv \${tmp_uenv} /boot/uEnv.cb2
+rm -f /boot/uEnv.ct
+mv \${tmp_uenv} /boot/uEnv.ct
 fi
 
 if [ -f /boot/uEnv.txt ]; then
@@ -214,6 +214,7 @@ EOF
 
 chmod 755 "$tmpdir$debhookdir/postinst.d/updateBoot"
 chmod 755 "$tmpdir$debhookdir/prerm.d/cleanBoot"
+
 
 # Try to determine maintainer and email values
 if [ -n "$DEBEMAIL" ]; then
@@ -322,9 +323,9 @@ cat <<EOF >> debian/control
 
 Package: $kernel_headers_packagename
 Provides: linux-headers, linux-headers-2.6
-Architecture: any
-Description: Linux kernel headers for $KERNELRELEASE on \${kernel:debarch}
- This package provides kernel header files for $KERNELRELEASE on \${kernel:debarch}
+Architecture: $arch
+Description: Linux kernel headers for $KERNELRELEASE on $arch
+ This package provides kernel header files for $KERNELRELEASE on $arch
  .
  This is useful for people who need to build external modules
 EOF
